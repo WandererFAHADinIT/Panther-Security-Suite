@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panther</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav>
+        <div class="logo">🐯 Panther</div>
+        <ul>
+            <li><a href="#" class="active">Password Analyzer</a></li>
+            <li><a href="#">Brute Force</a></li>
+            <li><a href="#">Dictionary Attack</a></li>
+            <li><a href="#">Hash Cracker</a></li>
+            <li><a href="#">Generate Report</a></li>
+        </ul>
+    </nav>
+
+    <!-- MAIN CONTENT AREA -->
+    <main>
+        <!-- HERO SECTION -->
+        <div class="hero">
+            <h1>Password Security Analysis Suite</h1>
+            <p>Educational tool demonstrating real-world attack techniques and defense mechanisms</p>
+        </div>
+
+        <!-- MODULE CARDS -->
+        <div class="cards">
+
+            <div class="card blue">
+                <div class="card-icon">🔵</div>
+                <h2>Password Analyzer</h2>
+                <p>Analyze password strength, entropy score, and get improvement suggestions in real time.</p>
+                <button onclick="window.location.href='/analyzer'">Launch Module</button>
+            </div>
+
+            <div class="card red">
+                <div class="card-icon">🔴</div>
+                <h2>Brute Force Demo</h2>
+                <p>Watch a live brute force attack attempt every combination until it cracks your PIN.</p>
+                <button onclick="window.location.href='/bruteforce'">Launch Module</button>
+            </div>
+
+            <div class="card orange">
+                <div class="card-icon">🟠</div>
+                <h2>Dictionary Attack</h2>
+                <p>See how common passwords are cracked instantly using real wordlists and mutations.</p>
+                <button onclick="window.location.href='/dictionary'">Launch Module</button>
+            </div>
+
+            <div class="card purple">
+                <div class="card-icon">🟣</div>
+                <h2>Hash Cracker</h2>
+                <p>Paste any hash, auto-identify its type, and watch it get cracked in real time.</p>
+                <button onclick="window.location.href='/hashcracker'">Launch Module</button>
+            </div>
+
+            <div class="card green">
+                <div class="card-icon">🟢</div>
+                <h2>Report Generator</h2>
+                <p>Generate a professional PDF security report of all your analysis results.</p>
+                <button onclick="window.location.href='/report'">Launch Module</button>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>Panther — Information Security Project | PUCIT | BS Information Technology</p>
+    </footer>
+
+</body>
+</html>
