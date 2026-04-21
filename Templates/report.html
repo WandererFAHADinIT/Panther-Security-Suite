@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panther — Report Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <nav>
+        <div class="logo">🐯 Panther</div>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/analyzer">Password Analyzer</a></li>
+            <li><a href="/bruteforce">Brute Force</a></li>
+            <li><a href="/dictionary">Dictionary Attack</a></li>
+            <li><a href="/hashcracker">Hash Cracker</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="hero">
+            <h1>🟢 Security Report Generator</h1>
+            <p>Fill in your analysis results and generate a professional PDF security report</p>
+        </div>
+
+        <div class="analyzer-box">
+
+            <!-- REPORT FORM -->
+            <div class="bf-settings" style="border-color:#1a5c2a;">
+
+                <h3 style="color:#00aa44; margin-bottom:25px;">
+                    📋 Enter Your Analysis Results
+                </h3>
+
+                <!-- STUDENT INFO -->
+                <div class="result-grid" style="margin-bottom:20px;">
+                    <div class="setting-group">
+                        <label>Your Name</label>
+                        <input type="text" id="studentName" placeholder="e.g. Ali Hassan">
+                    </div>
+                    <div class="setting-group">
+                        <label>Roll Number</label>
+                        <input type="text" id="rollNumber" placeholder="e.g. BSIT-2023-001">
+                    </div>
+                </div>
+
+                <!-- MODULE 1 -->
+                <div class="report-section">
+                    <h4>🔵 Module 1 — Password Analyzer</h4>
+                    <div class="result-grid">
+                        <div class="setting-group">
+                            <label>Password Tested</label>
+                            <input type="text" id="m1Password" placeholder="e.g. mypassword">
+                        </div>
+                        <div class="setting-group">
+                            <label>Score (out of 10)</label>
+                            <input type="number" id="m1Score" min="0" max="10" placeholder="e.g. 7">
+                        </div>
+                        <div class="setting-group">
+                            <label>Strength Level</label>
+                            <select id="m1Strength">
+                                <option>Weak</option>
+                                <option>Moderate</option>
+                                <option>Strong</option>
+                                <option>Very Strong</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label>Crack Time</label>
+                            <input type="text" id="m1CrackTime" placeholder="e.g. 3 hours">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE 2 -->
+                <div class="report-section">
+                    <h4>🔴 Module 2 — Brute Force</h4>
+                    <div class="result-grid">
+                        <div class="setting-group">
+                            <label>Password Cracked</label>
+                            <input type="text" id="m2Password" placeholder="e.g. ab3">
+                        </div>
+                        <div class="setting-group">
+                            <label>Attempts Made</label>
+                            <input type="text" id="m2Attempts" placeholder="e.g. 1,234">
+                        </div>
+                        <div class="setting-group">
+                            <label>Time Taken</label>
+                            <input type="text" id="m2Time" placeholder="e.g. 2.3 seconds">
+                        </div>
+                        <div class="setting-group">
+                            <label>Character Set Used</label>
+                            <select id="m2Charset">
+                                <option>Digits only</option>
+                                <option>Lowercase letters</option>
+                                <option>Alphanumeric</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE 3 -->
+                <div class="report-section">
+                    <h4>🟠 Module 3 — Dictionary Attack</h4>
+                    <div class="result-grid">
+                        <div class="setting-group">
+                            <label>Password Cracked</label>
+                            <input type="text" id="m3Password" placeholder="e.g. password123">
+                        </div>
+                        <div class="setting-group">
+                            <label>Words Tried</label>
+                            <input type="text" id="m3Words" placeholder="e.g. 450">
+                        </div>
+                        <div class="setting-group">
+                            <label>How It Was Cracked</label>
+                            <input type="text" id="m3Method"
+                                placeholder="e.g. Leet speak mutation">
+                        </div>
+                        <div class="setting-group">
+                            <label>Time Taken</label>
+                            <input type="text" id="m3Time" placeholder="e.g. 0.5 seconds">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE 4 -->
+                <div class="report-section">
+                    <h4>🟣 Module 4 — Hash Cracker</h4>
+                    <div class="result-grid">
+                        <div class="setting-group">
+                            <label>Hash Type</label>
+                            <select id="m4HashType">
+                                <option>MD5</option>
+                                <option>SHA1</option>
+                                <option>SHA256</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label>Original Password Found</label>
+                            <input type="text" id="m4Password" placeholder="e.g. admin">
+                        </div>
+                        <div class="setting-group">
+                            <label>Attempts Made</label>
+                            <input type="text" id="m4Attempts" placeholder="e.g. 892">
+                        </div>
+                        <div class="setting-group">
+                            <label>Time Taken</label>
+                            <input type="text" id="m4Time" placeholder="e.g. 1.2 seconds">
+                        </div>
+                    </div>
+                </div>
+
+                <button class="launch-btn" style="background:#00aa44; margin-top:10px;"
+                    onclick="generateReport()">
+                    📄 Generate PDF Report
+                </button>
+
+            </div>
+
+            <!-- STATUS -->
+            <div id="reportStatus" style="display:none; text-align:center; padding:20px;">
+                <p id="reportStatusText" style="color:#00aa44; font-size:18px;
+                    font-weight:600;"></p>
+            </div>
+
+        </div>
+    </main>
+
+    <footer>
+        <p>Panther — Information Security Project | PUCIT | BS Information Technology</p>
+    </footer>
+
+   <script>
+    async function generateReport() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        const studentName = document.getElementById('studentName').value || 'N/A';
+        const rollNumber = document.getElementById('rollNumber').value || 'N/A';
+        const m1Password = document.getElementById('m1Password').value || 'N/A';
+        const m1Score = document.getElementById('m1Score').value || 'N/A';
+        const m1Strength = document.getElementById('m1Strength').value;
+        const m1CrackTime = document.getElementById('m1CrackTime').value || 'N/A';
+        const m2Password = document.getElementById('m2Password').value || 'N/A';
+        const m2Attempts = document.getElementById('m2Attempts').value || 'N/A';
+        const m2Time = document.getElementById('m2Time').value || 'N/A';
+        const m2Charset = document.getElementById('m2Charset').value;
+        const m3Password = document.getElementById('m3Password').value || 'N/A';
+        const m3Words = document.getElementById('m3Words').value || 'N/A';
+        const m3Method = document.getElementById('m3Method').value || 'N/A';
+        const m3Time = document.getElementById('m3Time').value || 'N/A';
+        const m4HashType = document.getElementById('m4HashType').value;
+        const m4Password = document.getElementById('m4Password').value || 'N/A';
+        const m4Attempts = document.getElementById('m4Attempts').value || 'N/A';
+        const m4Time = document.getElementById('m4Time').value || 'N/A';
+
+        const now = new Date().toLocaleDateString('en-US', {
+            year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        let y = 20;
+
+        // ===== HEADER =====
+        doc.setFillColor(10, 10, 26);
+        doc.rect(0, 0, 210, 35, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(20);
+        doc.setTextColor(0, 212, 255);
+        doc.text('Panther Security Report', 105, 15, { align: 'center' });
+        doc.setFontSize(9);
+        doc.setTextColor(150, 150, 150);
+        doc.text('Password Security Analysis Suite | PUCIT | BS Information Technology',
+            105, 25, { align: 'center' });
+
+        y = 45;
+
+        // ===== STUDENT INFO =====
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(0, 212, 255);
+        doc.text('Student Information', 15, y);
+        y += 7;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(200, 200, 200);
+        doc.text(`Name: ${studentName}     Roll No: ${rollNumber}     Date: ${now}`, 15, y);
+        y += 12;
+
+        // ===== HELPER FUNCTIONS =====
+        function addSection(title, color, rows) {
+            // Section header
+            doc.setFillColor(...color);
+            doc.rect(15, y - 5, 180, 10, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.setTextColor(255, 255, 255);
+            doc.text(title, 17, y + 2);
+            y += 10;
+
+            // Rows
+            rows.forEach(([label, value]) => {
+                doc.setFillColor(15, 15, 30);
+                doc.rect(15, y - 4, 70, 8, 'F');
+                doc.setFillColor(20, 20, 40);
+                doc.rect(85, y - 4, 110, 8, 'F');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(9);
+                doc.setTextColor(150, 150, 150);
+                doc.text(label, 17, y + 1);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(220, 220, 220);
+                doc.text(String(value), 87, y + 1);
+                y += 9;
+            });
+            y += 6;
+        }
+
+        // ===== MODULE 1 =====
+        addSection('Module 1 - Password Strength Analyzer', [0, 80, 160], [
+            ['Password Tested', m1Password],
+            ['Strength Score', `${m1Score} / 10`],
+            ['Strength Level', m1Strength],
+            ['Estimated Crack Time', m1CrackTime],
+        ]);
+
+        // ===== MODULE 2 =====
+        addSection('Module 2 - Brute Force Attack', [160, 30, 0], [
+            ['Password Cracked', m2Password],
+            ['Total Attempts', m2Attempts],
+            ['Time Taken', m2Time],
+            ['Character Set', m2Charset],
+        ]);
+
+        // ===== MODULE 3 =====
+        addSection('Module 3 - Dictionary Attack', [160, 80, 0], [
+            ['Password Cracked', m3Password],
+            ['Words Tried', m3Words],
+            ['Crack Method', m3Method],
+            ['Time Taken', m3Time],
+        ]);
+
+        // ===== MODULE 4 =====
+        addSection('Module 4 - Hash Identifier & Cracker', [100, 0, 160], [
+            ['Hash Type', m4HashType],
+            ['Original Password', m4Password],
+            ['Attempts Made', m4Attempts],
+            ['Time Taken', m4Time],
+        ]);
+
+        // ===== CONCLUSION =====
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(0, 212, 255);
+        doc.text('Conclusion & Recommendations', 15, y);
+        y += 8;
+
+        const conclusions = [
+            '1. Short and common passwords are extremely vulnerable to brute force attacks.',
+            '2. MD5 and SHA1 hashes can be cracked within seconds using wordlists.',
+            '3. Passwords should be at least 12 characters with mixed case, numbers and symbols.',
+            '4. Always use bcrypt or Argon2 with salting for proper password storage.',
+            '5. Enable multi-factor authentication wherever possible for extra security.'
+        ];
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(180, 180, 180);
+        conclusions.forEach(line => {
+            doc.text(line, 15, y);
+            y += 7;
+        });
+
+        // ===== FOOTER =====
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Panther | Educational Purpose Only | Information Security Project',
+            105, 285, { align: 'center' });
+
+        // ===== SAVE =====
+        doc.save('PantherPassword_Report.pdf');
+
+        document.getElementById('reportStatus').style.display = 'block';
+        document.getElementById('reportStatusText').textContent =
+            '✅ Report downloaded successfully!';
+    }
+</script>
+
+</body>
+</html>

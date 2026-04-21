@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panther — Brute Force Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <nav>
+        <div class="logo">🐯 Panther</div>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/analyzer">Password Analyzer</a></li>
+            <li><a href="/bruteforce" class="active">Brute Force</a></li>
+            <li><a href="#">Dictionary Attack</a></li>
+            <li><a href="#">Hash Cracker</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="hero">
+            <h1>🔴 Brute Force Attack Demo</h1>
+            <p>Watch how every possible combination is tried until your password is cracked</p>
+        </div>
+
+        <div class="analyzer-box">
+
+            <!-- SETTINGS -->
+            <div class="bf-settings">
+
+                <div class="setting-group">
+                    <label>Target Password (max 5 chars for demo)</label>
+                    <input type="text" id="targetPassword" maxlength="5" placeholder="e.g. ab3">
+                </div>
+
+                <div class="setting-group">
+                    <label>Character Set</label>
+                    <select id="charSet">
+                        <option value="digits">Digits only (0-9)</option>
+                        <option value="lower">Lowercase letters (a-z)</option>
+                        <option value="alphanumeric">Alphanumeric (a-z, 0-9)</option>
+                    </select>
+                </div>
+
+                <button class="launch-btn red-btn" onclick="startBruteForce()">
+                    ⚡ Start Brute Force Attack
+                </button>
+
+            </div>
+
+            <!-- LIVE STATS -->
+            <div class="bf-stats" id="bfStats" style="display:none;">
+
+                <div class="result-grid">
+                    <div class="result-item">
+                        <span class="label">Current Attempt</span>
+                        <span id="currentAttempt" style="color:#00d4ff; font-family:monospace;">—</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Total Attempts</span>
+                        <span id="totalAttempts">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Time Elapsed</span>
+                        <span id="timeElapsed">0.00s</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Status</span>
+                        <span id="bfStatus">Running...</span>
+                    </div>
+                </div>
+
+                <!-- PROGRESS BAR -->
+                <div class="meter-container" style="margin-top:20px;">
+                    <div class="meter-bar">
+                        <div class="meter-fill" id="bfMeter" style="background:#cc2200;"></div>
+                    </div>
+                    <span id="bfPercent">0%</span>
+                </div>
+
+                <!-- RESULT -->
+                <div class="crack-time" id="bfResult" style="display:none;">
+                    <h3 id="bfResultTitle">—</h3>
+                    <p id="bfResultText">—</p>
+                </div>
+
+                <!-- COMPARISON TABLE -->
+                <div class="suggestions" id="comparisonTable" style="display:none;">
+                    <h3>📊 What if the password was longer?</h3>
+                    <table class="bf-table">
+                        <thead>
+                            <tr>
+                                <th>Length</th>
+                                <th>Possible Combinations</th>
+                                <th>Estimated Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparisonBody"></tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Panther — Information Security Project | PUCIT | BS Information Technology</p>
+    </footer>
+
+    <script>
+        let attacking = false;
+
+        async function startBruteForce() {
+            const password = document.getElementById('targetPassword').value.trim();
+            const charSet = document.getElementById('charSet').value;
+
+            if (!password) {
+                alert('Please enter a target password!');
+                return;
+            }
+
+            if (attacking) return;
+            attacking = true;
+
+            // Show stats section
+            document.getElementById('bfStats').style.display = 'block';
+            document.getElementById('bfResult').style.display = 'none';
+            document.getElementById('comparisonTable').style.display = 'none';
+            document.getElementById('bfMeter').style.width = '0%';
+            document.getElementById('bfPercent').textContent = '0%';
+            document.getElementById('totalAttempts').textContent = '0';
+            document.getElementById('timeElapsed').textContent = '0.00s';
+            document.getElementById('bfStatus').textContent = '⚡ Running...';
+
+            const startTime = Date.now();
+
+            // Timer update
+            const timer = setInterval(() => {
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                document.getElementById('timeElapsed').textContent = elapsed + 's';
+            }, 100);
+
+            try {
+                const response = await fetch('/bruteforce', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, charSet })
+                });
+
+                const data = await response.json();
+                clearInterval(timer);
+                attacking = false;
+
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                document.getElementById('timeElapsed').textContent = elapsed + 's';
+                document.getElementById('totalAttempts').textContent = data.attempts.toLocaleString();
+                document.getElementById('currentAttempt').textContent = data.cracked;
+                document.getElementById('bfMeter').style.width = '100%';
+                document.getElementById('bfMeter').style.background = '#00aa44';
+                document.getElementById('bfPercent').textContent = '100%';
+
+                // Result box
+                const resultBox = document.getElementById('bfResult');
+                resultBox.style.display = 'block';
+                resultBox.style.borderColor = '#00aa44';
+                document.getElementById('bfResultTitle').textContent = '✅ Password Cracked!';
+                document.getElementById('bfResultTitle').style.color = '#00aa44';
+                document.getElementById('bfResultText').textContent =
+                    `"${data.cracked}" was found in ${data.attempts.toLocaleString()} attempts in ${elapsed} seconds`;
+                document.getElementById('bfStatus').textContent = '✅ Cracked!';
+
+                // Comparison table
+                document.getElementById('comparisonTable').style.display = 'block';
+                const tbody = document.getElementById('comparisonBody');
+                tbody.innerHTML = '';
+                data.comparison.forEach(row => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${row.length} chars</td>
+                            <td>${row.combinations}</td>
+                            <td>${row.time}</td>
+                        </tr>`;
+                });
+
+            } catch (err) {
+                clearInterval(timer);
+                attacking = false;
+                alert('Something went wrong. Try again.');
+            }
+        }
+
+        // Live attempt display
+        setInterval(async () => {
+            if (!attacking) return;
+            // just visual flicker effect
+            const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            let fake = '';
+            for (let i = 0; i < 3; i++) fake += chars[Math.floor(Math.random() * chars.length)];
+            document.getElementById('currentAttempt').textContent = fake;
+        }, 80);
+    </script>
+
+</body>
+</html>

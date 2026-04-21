@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panther — Dictionary Attack</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <nav>
+        <div class="logo">🐯 Panther</div>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/analyzer">Password Analyzer</a></li>
+            <li><a href="/bruteforce">Brute Force</a></li>
+            <li><a href="/dictionary" class="active">Dictionary Attack</a></li>
+            <li><a href="#">Hash Cracker</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="hero">
+            <h1>🟠 Dictionary Attack Demo</h1>
+            <p>See how common passwords are cracked instantly using real wordlists and smart mutations</p>
+        </div>
+
+        <div class="analyzer-box">
+
+            <!-- SETTINGS -->
+            <div class="bf-settings" style="border-color:#5c3a1a;">
+
+                <div class="setting-group">
+                    <label>Target Password</label>
+                    <input type="text" id="targetPassword" placeholder="e.g. password123">
+                </div>
+
+                <div class="setting-group">
+                    <label>Attack Mode</label>
+                    <select id="attackMode">
+                        <option value="basic">Basic — wordlist only</option>
+                        <option value="mutations" selected>Smart — wordlist + mutations</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+    <label>Custom Wordlist (optional — .txt file, one word per line)</label>
+    <input type="file" id="wordlistFile" accept=".txt"
+        style="color:#aaa; padding:10px;">
+</div>
+
+                <button class="launch-btn" style="background:#cc6600;" onclick="startDictionary()">
+                    📖 Start Dictionary Attack
+                </button>
+
+            </div>
+
+            <!-- LIVE STATS -->
+            <div class="bf-stats" id="dictStats" style="display:none;">
+
+                <div class="result-grid">
+                    <div class="result-item">
+                        <span class="label">Current Attempt</span>
+                        <span id="currentAttempt" style="color:#cc6600; font-family:monospace;">—</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Words Tried</span>
+                        <span id="wordsTried">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Time Elapsed</span>
+                        <span id="timeElapsed">0.00s</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Status</span>
+                        <span id="dictStatus">Running...</span>
+                    </div>
+                </div>
+
+                <!-- PROGRESS -->
+                <div class="meter-container" style="margin-top:20px;">
+                    <div class="meter-bar">
+                        <div class="meter-fill" id="dictMeter" style="background:#cc6600; width:0%;"></div>
+                    </div>
+                    <span id="dictPercent">0%</span>
+                </div>
+
+                <!-- RESULT -->
+                <div class="crack-time" id="dictResult" style="display:none; margin-top:20px;">
+                    <h3 id="dictResultTitle">—</h3>
+                    <p id="dictResultText">—</p>
+                </div>
+
+                <!-- MUTATION USED -->
+                <div class="suggestions" id="mutationBox" style="display:none; margin-top:20px;">
+                    <h3>🔧 How It Was Cracked</h3>
+                    <p id="mutationUsed" style="color:#aaa; margin-top:10px; font-size:15px;"></p>
+                </div>
+
+                <!-- STATS BOX -->
+                <div class="suggestions" id="statsBox" style="display:none; margin-top:20px;">
+                    <h3>📊 Attack Statistics</h3>
+                    <div class="result-grid" style="margin-top:15px;">
+                        <div class="result-item">
+                            <span class="label">Total Words in List</span>
+                            <span id="statTotal">—</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="label">Mutations Generated</span>
+                            <span id="statMutations">—</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="label">Words Tried</span>
+                            <span id="statTried">—</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="label">Result</span>
+                            <span id="statResult">—</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Panther — Information Security Project | PUCIT | BS Information Technology</p>
+    </footer>
+
+    <script>
+        let attacking = false;
+        async function startDictionary() {
+    const password = document.getElementById('targetPassword').value.trim();
+    const attackMode = document.getElementById('attackMode').value;
+    const fileInput = document.getElementById('wordlistFile');
+
+    if (!password) {
+        alert('Please enter a target password!');
+        return;
+    }
+
+    if (attacking) return;
+    attacking = true;
+
+    // Reset UI
+    document.getElementById('dictStats').style.display = 'block';
+    document.getElementById('dictResult').style.display = 'none';
+    document.getElementById('mutationBox').style.display = 'none';
+    document.getElementById('statsBox').style.display = 'none';
+    document.getElementById('dictMeter').style.width = '0%';
+    document.getElementById('dictMeter').style.background = '#cc6600';
+    document.getElementById('dictPercent').textContent = '0%';
+    document.getElementById('wordsTried').textContent = '0';
+    document.getElementById('timeElapsed').textContent = '0.00s';
+    document.getElementById('dictStatus').textContent = '⚡ Running...';
+
+    const startTime = Date.now();
+
+    const timer = setInterval(() => {
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+        document.getElementById('timeElapsed').textContent = elapsed + 's';
+    }, 100);
+
+    const flicker = setInterval(() => {
+        if (!attacking) return;
+        const words = ['password', 'admin', 'hello', 'qwerty', 'dragon'];
+        const w = words[Math.floor(Math.random() * words.length)];
+        document.getElementById('currentAttempt').textContent = w;
+    }, 150);
+
+    try {
+        // Check if user uploaded a custom wordlist
+        let customWords = null;
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const text = await file.text();
+            customWords = text.split('\n')
+                .map(w => w.trim())
+                .filter(w => w.length > 0);
+        }
+
+        const response = await fetch('/dictionary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                password,
+                attackMode,
+                customWords  // send custom words to Flask
+            })
+        });
+
+        const data = await response.json();
+        clearInterval(timer);
+        clearInterval(flicker);
+        attacking = false;
+
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+        document.getElementById('timeElapsed').textContent = elapsed + 's';
+        document.getElementById('wordsTried').textContent = data.attempts.toLocaleString();
+        document.getElementById('dictMeter').style.width = '100%';
+        document.getElementById('dictPercent').textContent = '100%';
+
+        const resultBox = document.getElementById('dictResult');
+        resultBox.style.display = 'block';
+
+        if (data.cracked) {
+            document.getElementById('currentAttempt').textContent = data.cracked;
+            document.getElementById('dictMeter').style.background = '#00aa44';
+            document.getElementById('dictStatus').textContent = '✅ Cracked!';
+            resultBox.style.borderColor = '#1a5c2a';
+            document.getElementById('dictResultTitle').textContent = '✅ Password Cracked!';
+            document.getElementById('dictResultTitle').style.color = '#00aa44';
+            document.getElementById('dictResultText').textContent =
+                `"${data.cracked}" was found after ${data.attempts.toLocaleString()} attempts in ${elapsed} seconds`;
+            document.getElementById('mutationBox').style.display = 'block';
+            document.getElementById('mutationUsed').textContent = data.mutation_info;
+        } else {
+            document.getElementById('dictMeter').style.background = '#cc2200';
+            document.getElementById('dictStatus').textContent = '❌ Not Found';
+            resultBox.style.borderColor = '#5c1a1a';
+            document.getElementById('dictResultTitle').textContent = '❌ Password Not Found';
+            document.getElementById('dictResultTitle').style.color = '#cc2200';
+            document.getElementById('dictResultText').textContent =
+                'Password not found in wordlist — it is relatively strong against dictionary attacks!';
+        }
+
+        document.getElementById('statsBox').style.display = 'block';
+        document.getElementById('statTotal').textContent = data.total_words.toLocaleString();
+        document.getElementById('statMutations').textContent =
+            data.total_mutations.toLocaleString();
+        document.getElementById('statTried').textContent = data.attempts.toLocaleString();
+        document.getElementById('statResult').textContent =
+            data.cracked ? '✅ Cracked' : '❌ Not Found';
+
+    } catch (err) {
+        clearInterval(timer);
+        clearInterval(flicker);
+        attacking = false;
+        alert('Something went wrong. Try again.');
+    }
+}
+    </script>
+
+</body>
+</html>

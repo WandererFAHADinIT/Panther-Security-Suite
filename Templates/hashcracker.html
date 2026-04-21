@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panther — Hash Cracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <nav>
+        <div class="logo">🐯 Panther</div>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/analyzer">Password Analyzer</a></li>
+            <li><a href="/bruteforce">Brute Force</a></li>
+            <li><a href="/dictionary">Dictionary Attack</a></li>
+            <li><a href="/hashcracker" class="active">Hash Cracker</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="hero">
+            <h1>🟣 Hash Identifier & Cracker</h1>
+            <p>Paste any hash — we'll identify its type and attempt to crack it</p>
+        </div>
+
+        <div class="analyzer-box">
+
+            <!-- INPUT -->
+            <div class="bf-settings" style="border-color:#3a1a5c;">
+
+                <div class="setting-group">
+                    <label>Paste Hash Here</label>
+                    <input type="text" id="hashInput"
+                        placeholder="e.g. 5f4dcc3b5aa765d61d8327deb882cf99">
+                </div>
+
+                <!-- HASH TYPE DISPLAY -->
+                <div class="result-item" id="hashTypeBox" style="display:none; margin-bottom:20px;">
+                    <span class="label">Detected Hash Type</span>
+                    <span id="hashType" style="color:#7700cc; font-weight:700;">—</span>
+                </div>
+
+                <div class="setting-group">
+                    <label>Attack Mode</label>
+                    <select id="attackMode">
+                        <option value="dictionary">Dictionary Attack</option>
+                        <option value="both" selected>Dictionary + Brute Force</option>
+                    </select>
+                </div>
+
+                <button class="launch-btn" style="background:#7700cc;"
+                    onclick="startHashCrack()">
+                    🔓 Identify & Crack Hash
+                </button>
+
+            </div>
+
+            <!-- LIVE STATS -->
+            <div class="bf-stats" id="hashStats" style="display:none;">
+
+                <div class="result-grid">
+                    <div class="result-item">
+                        <span class="label">Current Attempt</span>
+                        <span id="currentAttempt"
+                            style="color:#7700cc; font-family:monospace;">—</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Attempts Made</span>
+                        <span id="attemptsMade">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Time Elapsed</span>
+                        <span id="timeElapsed">0.00s</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Attack Phase</span>
+                        <span id="attackPhase">—</span>
+                    </div>
+                </div>
+
+                <!-- PROGRESS -->
+                <div class="meter-container" style="margin-top:20px;">
+                    <div class="meter-bar">
+                        <div class="meter-fill" id="hashMeter"
+                            style="background:#7700cc; width:0%;"></div>
+                    </div>
+                    <span id="hashPercent">0%</span>
+                </div>
+
+                <!-- RESULT -->
+                <div class="crack-time" id="hashResult" style="display:none; margin-top:20px;">
+                    <h3 id="hashResultTitle">—</h3>
+                    <p id="hashResultText">—</p>
+                </div>
+
+                <!-- HASH INFO BOX -->
+                <div class="suggestions" id="hashInfoBox" style="display:none; margin-top:20px;">
+                    <h3>📚 About This Hash Type</h3>
+                    <p id="hashInfo" style="color:#aaa; margin-top:10px;
+                        font-size:14px; line-height:1.8;"></p>
+                </div>
+
+                <!-- SALTING DEMO -->
+                <div class="suggestions" id="saltingBox" style="display:none; margin-top:20px;">
+                    <h3>🧂 Why Salting Would Have Prevented This</h3>
+                    <div style="margin-top:15px;">
+                        <div class="result-item" style="margin-bottom:10px;">
+                            <span class="label">Original Password</span>
+                            <span id="saltOriginal" style="color:#cc2200;">—</span>
+                        </div>
+                        <div class="result-item" style="margin-bottom:10px;">
+                            <span class="label">Salt Added</span>
+                            <span id="saltValue" style="color:#00d4ff;">—</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="label">New Hash (unsalted vs salted)</span>
+                            <span id="saltedHash"
+                                style="color:#00aa44; font-size:11px; font-family:monospace;">—</span>
+                        </div>
+                    </div>
+                    <p style="color:#888; font-size:13px; margin-top:15px;">
+                        ⬆️ Even though the password is the same, the salted hash is completely
+                        different — making rainbow table attacks useless!
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Panther — Information Security Project | PUCIT | BS Information Technology</p>
+    </footer>
+
+    <script>
+        let attacking = false;
+
+        // Auto detect hash type as user types
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('hashInput').addEventListener('keyup', () => {
+                const hash = document.getElementById('hashInput').value.trim();
+                const typeBox = document.getElementById('hashTypeBox');
+                const typeLabel = document.getElementById('hashType');
+
+                if (hash.length === 0) {
+                    typeBox.style.display = 'none';
+                    return;
+                }
+
+                typeBox.style.display = 'flex';
+
+                if (hash.length === 32 && /^[a-f0-9]+$/i.test(hash)) {
+                    typeLabel.textContent = 'MD5 (Very Weak ❌)';
+                    typeLabel.style.color = '#cc2200';
+                } else if (hash.length === 40 && /^[a-f0-9]+$/i.test(hash)) {
+                    typeLabel.textContent = 'SHA1 (Weak ❌)';
+                    typeLabel.style.color = '#cc6600';
+                } else if (hash.length === 64 && /^[a-f0-9]+$/i.test(hash)) {
+                    typeLabel.textContent = 'SHA256 (Decent ✅)';
+                    typeLabel.style.color = '#ccaa00';
+                } else if (hash.startsWith('$2b$') || hash.startsWith('$2a$')) {
+                    typeLabel.textContent = 'bcrypt (Strong ✅✅)';
+                    typeLabel.style.color = '#00aa44';
+                } else {
+                    typeLabel.textContent = 'Unknown / Too short';
+                    typeLabel.style.color = '#888';
+                }
+            });
+        });
+
+        async function startHashCrack() {
+            const hash = document.getElementById('hashInput').value.trim();
+            const attackMode = document.getElementById('attackMode').value;
+
+            if (!hash) {
+                alert('Please paste a hash first!');
+                return;
+            }
+
+            if (attacking) return;
+            attacking = true;
+
+            // Reset UI
+            document.getElementById('hashStats').style.display = 'block';
+            document.getElementById('hashResult').style.display = 'none';
+            document.getElementById('hashInfoBox').style.display = 'none';
+            document.getElementById('saltingBox').style.display = 'none';
+            document.getElementById('hashMeter').style.width = '0%';
+            document.getElementById('hashMeter').style.background = '#7700cc';
+            document.getElementById('hashPercent').textContent = '0%';
+            document.getElementById('attemptsMade').textContent = '0';
+            document.getElementById('timeElapsed').textContent = '0.00s';
+            document.getElementById('attackPhase').textContent = '📖 Dictionary phase...';
+
+            const startTime = Date.now();
+
+            const timer = setInterval(() => {
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                document.getElementById('timeElapsed').textContent = elapsed + 's';
+            }, 100);
+
+            const flicker = setInterval(() => {
+                if (!attacking) return;
+                const words = ['password', 'admin', 'hello', 'letmein', 'dragon'];
+                const w = words[Math.floor(Math.random() * words.length)];
+                document.getElementById('currentAttempt').textContent = w;
+            }, 150);
+
+            try {
+                const response = await fetch('/hashcracker', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ hash, attackMode })
+                });
+
+                const data = await response.json();
+                clearInterval(timer);
+                clearInterval(flicker);
+                attacking = false;
+
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                document.getElementById('timeElapsed').textContent = elapsed + 's';
+                document.getElementById('attemptsMade').textContent =
+                    data.attempts.toLocaleString();
+                document.getElementById('attackPhase').textContent = data.phase;
+                document.getElementById('hashMeter').style.width = '100%';
+                document.getElementById('hashPercent').textContent = '100%';
+
+                const resultBox = document.getElementById('hashResult');
+                resultBox.style.display = 'block';
+
+                if (data.cracked) {
+                    document.getElementById('currentAttempt').textContent = data.cracked;
+                    document.getElementById('hashMeter').style.background = '#00aa44';
+                    resultBox.style.borderColor = '#1a5c2a';
+                    document.getElementById('hashResultTitle').textContent =
+                        '✅ Hash Cracked!';
+                    document.getElementById('hashResultTitle').style.color = '#00aa44';
+                    document.getElementById('hashResultText').textContent =
+                        `Original password was "${data.cracked}" — found in ${data.attempts.toLocaleString()} attempts in ${elapsed}s`;
+
+                    // Salting demo
+                    document.getElementById('saltingBox').style.display = 'block';
+                    document.getElementById('saltOriginal').textContent = data.cracked;
+                    document.getElementById('saltValue').textContent = data.salt_example;
+                    document.getElementById('saltedHash').textContent = data.salted_hash;
+
+                } else {
+                    document.getElementById('hashMeter').style.background = '#cc2200';
+                    resultBox.style.borderColor = '#5c1a1a';
+                    document.getElementById('hashResultTitle').textContent =
+                        '❌ Hash Not Cracked';
+                    document.getElementById('hashResultTitle').style.color = '#cc2200';
+                    document.getElementById('hashResultText').textContent =
+                        'Password not found in wordlist or brute force range — try a simpler password for demo purposes';
+                }
+
+                // Hash info
+                document.getElementById('hashInfoBox').style.display = 'block';
+                document.getElementById('hashInfo').textContent = data.hash_info;
+
+            } catch (err) {
+                clearInterval(timer);
+                clearInterval(flicker);
+                attacking = false;
+                alert('Something went wrong. Try again.');
+            }
+        }
+    </script>
+
+</body>
+</html>

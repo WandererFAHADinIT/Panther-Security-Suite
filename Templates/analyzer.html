@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panther — Password Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav>
+        <div class="logo">🐯 Panther</div>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/analyzer" class="active">Password Analyzer</a></li>
+            <li><a href="#">Brute Force</a></li>
+            <li><a href="#">Dictionary Attack</a></li>
+            <li><a href="#">Hash Cracker</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="hero">
+            <h1>🔵 Password Strength Analyzer</h1>
+            <p>Type a password below and get a real time security analysis</p>
+        </div>
+
+        <!-- INPUT SECTION -->
+        <div class="analyzer-box">
+            <div class="input-group">
+                <input type="text" id="passwordInput" placeholder="Enter your password here..." autocomplete="off">
+                <button onclick="analyzePassword()">Analyze</button>
+            </div>
+
+            <!-- STRENGTH METER -->
+            <div class="meter-container">
+                <div class="meter-bar">
+                    <div class="meter-fill" id="meterFill"></div>
+                </div>
+                <span id="strengthLabel">—</span>
+            </div>
+
+            <!-- RESULTS -->
+            <div class="results" id="results" style="display:none;">
+
+                <div class="score-box">
+                    <h2 id="scoreText">Score: 0/10</h2>
+                </div>
+
+                <div class="result-grid">
+                    <div class="result-item">
+                        <span class="label">Length</span>
+                        <span id="resLength">—</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Uppercase</span>
+                        <span id="resUpper">—</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Lowercase</span>
+                        <span id="resLower">—</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Numbers</span>
+                        <span id="resNumbers">—</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Symbols</span>
+                        <span id="resSymbols">—</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Common Password</span>
+                        <span id="resCommon">—</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Keyboard Pattern</span>
+                        <span id="resPattern">—</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Entropy Score</span>
+                        <span id="resEntropy">—</span>
+                    </div>
+                </div>
+
+                <!-- CRACK TIME -->
+                <div class="crack-time">
+                    <h3>⏱️ Estimated Time to Crack</h3>
+                    <p id="resCrackTime">—</p>
+                </div>
+
+                <!-- SUGGESTIONS -->
+                <div class="suggestions" id="suggestions"></div>
+
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Panther — Information Security Project | PUCIT | BS Information Technology</p>
+    </footer>
+
+    <script>
+        async function analyzePassword() {
+            const password = document.getElementById('passwordInput').value;
+
+            if (!password) {
+                alert('Please enter a password first!');
+                return;
+            }
+
+            const response = await fetch('/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: password })
+            });
+
+            const data = await response.json();
+            displayResults(data);
+        }
+
+        function displayResults(data) {
+            document.getElementById('results').style.display = 'block';
+
+            // Score
+            document.getElementById('scoreText').textContent = `Score: ${data.score}/10`;
+
+            // Strength meter
+            const meter = document.getElementById('meterFill');
+            const label = document.getElementById('strengthLabel');
+            const percent = (data.score / 10) * 100;
+            meter.style.width = percent + '%';
+
+            if (data.score <= 3) {
+                meter.style.background = '#cc2200';
+                label.textContent = '🔴 Weak';
+                label.style.color = '#cc2200';
+            } else if (data.score <= 6) {
+                meter.style.background = '#cc6600';
+                label.textContent = '🟠 Moderate';
+                label.style.color = '#cc6600';
+            } else if (data.score <= 8) {
+                meter.style.background = '#ccaa00';
+                label.textContent = '🟡 Strong';
+                label.style.color = '#ccaa00';
+            } else {
+                meter.style.background = '#00aa44';
+                label.textContent = '🟢 Very Strong';
+                label.style.color = '#00aa44';
+            }
+
+            // Details
+            document.getElementById('resLength').textContent = data.length;
+            document.getElementById('resUpper').textContent = data.has_upper ? '✅' : '❌';
+            document.getElementById('resLower').textContent = data.has_lower ? '✅' : '❌';
+            document.getElementById('resNumbers').textContent = data.has_numbers ? '✅' : '❌';
+            document.getElementById('resSymbols').textContent = data.has_symbols ? '✅' : '❌';
+            document.getElementById('resCommon').textContent = data.is_common ? '⚠️ Yes — Dangerous!' : '✅ No';
+            document.getElementById('resPattern').textContent = data.has_pattern ? '⚠️ Detected!' : '✅ None';
+            document.getElementById('resEntropy').textContent = data.entropy + ' bits';
+            document.getElementById('resCrackTime').textContent = data.crack_time;
+
+            // Suggestions
+            const sugBox = document.getElementById('suggestions');
+            if (data.suggestions.length > 0) {
+                sugBox.innerHTML = '<h3>💡 Suggestions</h3><ul>' +
+                    data.suggestions.map(s => `<li>${s}</li>`).join('') +
+                    '</ul>';
+            } else {
+                sugBox.innerHTML = '<h3>💡 Your password looks great!</h3>';
+            }
+        }
+
+        // Real time analysis on typing
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('passwordInput').addEventListener('keyup', analyzePassword);
+        });
+    </script>
+
+</body>
+</html>
